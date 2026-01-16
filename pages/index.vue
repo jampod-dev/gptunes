@@ -593,7 +593,7 @@ const placeholderText = ref(
     height: calc(100dvh - 67px);
     display: flex;
     flex-direction: column;
-    width:48rem;
+    width:64rem;
     max-width:100%;
     margin: 0 auto;
     padding-top: 1rem;
