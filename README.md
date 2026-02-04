@@ -49,8 +49,8 @@ GPTunes transforms natural language descriptions into curated playlists using Go
 ### AI & APIs
 
 - **Google Gemini API** - Advanced AI for natural language understanding and music curation
-- **Spotify Web API** - Music search and playlist management
-- **Spotify Embed API** - In-app track previews
+- **YouTube & Spotify Web APIs** - Music search 
+- **YouTube & Spotify Embed API** - In-app track previews
 
 ---
 

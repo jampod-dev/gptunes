@@ -17,7 +17,7 @@
                 </div>
                 <div class="header-controls">
                     <div class="music-source-selector">
-                        <label for="music-source">Music Source:</label>
+                        <label class="music-source-label" for="music-source">Music Source:</label>
                         <select id="music-source" :value="selectedMusicSource" @change="handleMusicSourceChange">
                             <option value="youtube">YouTube</option>
                             <option value="spotify">Spotify</option>
@@ -819,7 +819,13 @@ header {
     transition: all 0.5s ease;
 }
 
-/* Animated Waveform */
+.music-source-label  {
+    @media screen and (max-width: 767px) {
+        display: none;
+    }
+}
+/* Animated Waveform
+ */
 .sound-wave {
     display: flex;
     align-items: center;
@@ -833,6 +839,7 @@ header {
     border-radius: 2px;
     animation: wave-pulse 1.5s ease-in-out infinite;
 }
+
 
 .wave-bar:nth-child(1) {
     height: 12px;
