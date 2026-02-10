@@ -163,8 +163,21 @@
                                     </div>
                                 </template>
                             </draggable>    
-                            <span class="instructions" v-if="selectedMusicSource === 'youtube'">Click play to preview tracks via YouTube</span>
-                            <span class="instructions" v-else>Click play to preview tracks via Spotify</span>
+                            <div class="playlist-footer">
+                                <span class="instructions" v-if="selectedMusicSource === 'youtube'">Click play to preview tracks via YouTube</span>
+                                <span class="instructions" v-else>Click play to preview tracks via Spotify</span>
+                                <div class="export-buttons">
+                                    <button class="export-button" @click="downloadPlaylist(message.tracks, message.playlistName)">Download <img src="~/public/img/download.svg" alt="" /></button>
+                                    <button class="export-button" @click="copyPlaylistToClipboard(message.tracks)">Copy <img src="~/public/img/copy.svg" alt="" /></button>
+                                    
+                                    <img
+                                        v-tippy="{ content: importInstructions, placement: 'top', allowHTML: true, interactive: true }"
+                                        class="import-info"
+                                        src="~/public/img/information-line.svg"
+                                        alt="How to import to Spotify"
+                                    />
+                                </div>
+                            </div>
                         </div>
                     </div>
                    
@@ -283,7 +296,7 @@ watch(selectedTrack, (newTrack) => {
         }
         ytPlayer = null;
     }
-    
+
     // Clear previous Spotify controller
     spotifyController = null;
 
@@ -297,13 +310,19 @@ watch(selectedTrack, (newTrack) => {
                 setTimeout(() => {
                     const iframeId = `embed-iframe-${newTrack.id}`;
                     const iframe = document.getElementById(iframeId);
-                    
+
                     if (!iframe) return;
-                    
+
                     ytPlayer = new window.YT.Player(iframeId, {
                         events: {
-                            onReady: () => {
+                            onReady: (event: any) => {
                                 console.log('YouTube player ready');
+                                // Attempt to play - may work on mobile if user gesture is recent
+                                try {
+                                    event.target.playVideo();
+                                } catch (e) {
+                                    console.log('Autoplay blocked by browser');
+                                }
                             },
                             onStateChange: (event: any) => {
                                 if (event.data === 0) {
@@ -322,21 +341,21 @@ watch(selectedTrack, (newTrack) => {
                 setTimeout(() => {
                     const iframeId = `embed-iframe-${newTrack.id}`;
                     const iframe = document.getElementById(iframeId);
-                    
+
                     if (!iframe) return;
-                    
+
                     const options = {
                         uri: `spotify:track:${newTrack.id}`,
                         height: 80,
                     };
-                    
+
                     spotifyIframeApi.createController(iframe, options, (controller: any) => {
                         spotifyController = controller;
-                        
+
                         controller.addListener('ready', () => {
                             controller.play();
                         });
-                        
+
                         controller.addListener('playback_update', (e: any) => {
                             const { position, duration } = e.data;
                             if (position > 10000 && position >= duration - 1000) {
@@ -584,8 +603,55 @@ async function createPlaylist() {
 }
 
 const placeholderText = ref(
-    `Tell the AI what you’re in the mood for—anything from “late-night lo-fi for coding in Tokyo cafés” to “up-tempo Quebec fiddle tunes that aren’t on every tourist mix.” Type a sentence, a story, or even a vibe (“rainy bus rides in Seattle, 1997”), and our generator spins it into a hand-picked playlist in seconds. No genre boxes, no endless scrolling—just say it, and we play it.`
+    `Tell the AI what you're in the mood for—anything from "late-night lo-fi for coding in Tokyo cafés" to "up-tempo Quebec fiddle tunes that aren't on every tourist mix." Type a sentence, a story, or even a vibe ("rainy bus rides in Seattle, 1997"), and our generator spins it into a hand-picked playlist in seconds. No genre boxes, no endless scrolling—just say it, and we play it.`
 );
+
+const importInstructions = `<strong>Import to Spotify:</strong><br/>
+1. Click "Copy" or "Download"<br/>
+2. Go to <a href="https://www.tunemymusic.com" target="_blank" rel="noopener">tunemymusic.com</a><br/>
+3. Select "Free Text" as source (or "Upload file")<br/>
+4. Paste/upload your playlist<br/>
+5. Select Spotify (or another platform) as destination`;
+
+function formatPlaylistText(tracks: any[]) {
+    return tracks.map((track) => `${track.artist} - ${track.title || track['title:']}`).join('\n');
+}
+
+function copyPlaylistToClipboard(tracks: any[]) {
+    const text = formatPlaylistText(tracks);
+    navigator.clipboard
+        .writeText(text)
+        .then(() => {
+            toast.success({
+                title: 'Copied',
+                icon: '',
+                message: 'Playlist copied to clipboard',
+                layout: 1,
+                position: 'topCenter',
+            });
+        })
+        .catch(() => {
+            toast.error({
+                title: 'Error',
+                icon: '',
+                message: 'Failed to copy playlist',
+                layout: 1,
+                position: 'topCenter',
+            });
+        });
+}
+
+function downloadPlaylist(tracks: any[], playlistName: string) {
+    const text = formatPlaylistText(tracks);
+    const filename = (playlistName || 'playlist').replace(/[^a-z0-9]/gi, '_') + '.txt';
+    const blob = new Blob([text], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+}
 </script>
 
 <style lang="scss" scoped>
@@ -593,10 +659,11 @@ const placeholderText = ref(
     height: calc(100dvh - 67px);
     display: flex;
     flex-direction: column;
-    width:64rem;
-    max-width:100%;
+    width: 64rem;
+    max-width: 100%;
     margin: 0 auto;
     padding-top: 1rem;
+
     &.no-messages {
         align-items: center;
         justify-content: center;
@@ -885,7 +952,7 @@ img.draggable {
         gap: 8px;
         padding: 8px 12px;
         position: relative;
-        
+
         iframe {
             width: 100%;
             border-radius: 8px;
@@ -998,7 +1065,7 @@ img.draggable {
         cursor: pointer;
         opacity: 0.8;
         transition: opacity 0.2s ease;
-        z-index:9;
+        z-index: 9;
         &:hover {
             opacity: 1;
         }
@@ -1054,7 +1121,7 @@ img.draggable {
     }
 }
 .youtube-link {
-    display:inline-flex;
+    display: inline-flex;
 }
 
 /* Accessibility - Visually hidden labels */
@@ -1098,13 +1165,45 @@ img.draggable {
     }
 }
 
+.playlist-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 0.5rem;
+    gap: 1rem;
+}
 .instructions {
     font-style: italic;
     color: rgba(255, 255, 255, 0.5);
-    margin-top: 0.5rem;
     display: inline-block;
     @media screen and (max-width: 767px) {
         font-size: 16px;
+    }
+}
+.export-buttons {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.export-button {
+    padding: 6px 12px;
+    font-size: 13px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    img {
+        width: 14px;
+        height: 14px;
+    }
+}
+.import-info {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    opacity: 0.9;
+    transition: opacity 0.2s ease;
+    &:hover {
+        opacity: 1;
     }
 }
 .messages::-webkit-scrollbar {
@@ -1166,5 +1265,10 @@ img.draggable {
 .input-container::-webkit-scrollbar-thumb:hover {
     background: linear-gradient(180deg, rgba(102, 126, 234, 0.9) 0%, rgba(118, 75, 162, 0.9) 100%);
 }
+</style>
 
+<style lang="scss">
+.tippy-box {
+    z-index: 9999 !important;
+}
 </style>

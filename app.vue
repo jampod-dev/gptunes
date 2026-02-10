@@ -18,7 +18,11 @@
                 <div class="header-controls">
                     <div class="music-source-selector">
                         <label class="music-source-label" for="music-source">Music Source:</label>
-                        <select id="music-source" :value="selectedMusicSource" @change="handleMusicSourceChange">
+                        <select
+                            id="music-source"
+                            :value="selectedMusicSource"
+                            @change="handleMusicSourceChange"
+                        >
                             <option value="youtube">YouTube</option>
                             <option value="spotify">Spotify</option>
                         </select>
@@ -28,9 +32,9 @@
             <NuxtPage />
         </main>
     </div>
-    
+
     <!-- Confirm Dialog for Music Source Change -->
-    <div class="confirm-dialog-wrapper">    
+    <div class="confirm-dialog-wrapper">
         <dialog ref="confirmDialog" class="confirm-dialog">
             <div class="dialog-content">
                 <h3>Switch Music Source?</h3>
@@ -70,12 +74,12 @@ function handleMusicSourceChange(event: Event) {
     const target = event.target as HTMLSelectElement;
     const newValue = target.value;
     const oldValue = selectedMusicSource.value;
-    
+
     if (newValue !== oldValue) {
         // Store pending change and revert select temporarily
         pendingSourceChange = { newValue, selectElement: target };
         target.value = oldValue;
-        
+
         // Show the dialog
         confirmDialog.value?.showModal();
     }
@@ -85,12 +89,12 @@ function confirmSourceChange() {
     if (pendingSourceChange) {
         const newSource = pendingSourceChange.newValue;
         selectedMusicSource.value = newSource;
-        
+
         // Persist to localStorage
         if (typeof window !== 'undefined') {
             localStorage.setItem(MUSIC_SOURCE_KEY, newSource);
         }
-        
+
         confirmDialog.value?.close();
         pendingSourceChange = null;
         // Reload the page to start fresh
@@ -242,6 +246,15 @@ option {
     }
 }
 
+.tippy-box {
+    padding: 1rem;
+    line-height: 1.6em;
+    z-index: 9999;
+    a {
+        color: inherit;
+        pointer-events: initial;
+    }
+}
 /* GPTunes Custom iziToast Styles */
 /* Matches the dark AI chat interface theme with glassmorphism effects */
 
@@ -626,13 +639,13 @@ header {
     display: flex;
     align-items: center;
     gap: 8px;
-    
+
     label {
         font-size: 14px;
         color: rgba(255, 255, 255, 0.7);
         white-space: nowrap;
     }
-    
+
     select {
         background: rgba(255, 255, 255, 0.08);
         border: 1px solid rgba(255, 255, 255, 0.15);
@@ -670,29 +683,29 @@ header {
     color: #f4f4f5;
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
     pointer-events: auto;
-    
+
     /* Center the dialog */
     position: fixed;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
     margin: 0;
-    
+
     &::backdrop {
         background: rgba(0, 0, 0, 0.6);
         backdrop-filter: blur(4px);
     }
-    
+
     .dialog-content {
         padding: 24px;
-        
+
         h3 {
             margin: 0 0 12px 0;
             font-size: 18px;
             font-weight: 600;
             color: #f4f4f5;
         }
-        
+
         p {
             margin: 0 0 24px 0;
             font-size: 14px;
@@ -700,12 +713,12 @@ header {
             line-height: 1.5;
         }
     }
-    
+
     .dialog-actions {
         display: flex;
         gap: 12px;
         justify-content: flex-end;
-        
+
         button {
             padding: 10px 20px;
             border-radius: 8px;
@@ -714,24 +727,24 @@ header {
             cursor: pointer;
             transition: all 0.2s ease;
         }
-        
+
         .cancel-btn {
             background: transparent;
             border: 1px solid rgba(255, 255, 255, 0.2);
             color: #a1a1aa;
-            
+
             &:hover {
                 background: rgba(255, 255, 255, 0.05);
                 border-color: rgba(255, 255, 255, 0.3);
                 color: #f4f4f5;
             }
         }
-        
+
         .confirm-btn {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             border: none;
             color: white;
-            
+
             &:hover {
                 box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
                 transform: translateY(-1px);
@@ -819,7 +832,7 @@ header {
     transition: all 0.5s ease;
 }
 
-.music-source-label  {
+.music-source-label {
     @media screen and (max-width: 767px) {
         display: none;
     }
@@ -839,7 +852,6 @@ header {
     border-radius: 2px;
     animation: wave-pulse 1.5s ease-in-out infinite;
 }
-
 
 .wave-bar:nth-child(1) {
     height: 12px;
